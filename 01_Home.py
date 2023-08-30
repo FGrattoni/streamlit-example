@@ -69,7 +69,7 @@ scope = ["https://www.googleapis.com/auth/spreadsheets",
 credentials = service_account.Credentials.from_service_account_info(
     st.secrets["gcp_service_account"], scopes = scope )
 client = Client(scope=scope, creds=credentials)
-spreadsheetname = "ELO db" 
+spreadsheetname = "Copy of ELO db" 
 spread = Spread(spreadsheetname, client = client)
 
 # Check if the connection is established
@@ -83,7 +83,7 @@ sh = client.open(spreadsheetname)
 
 
 # DOWNLOAD THE DATA
-@st.experimental_memo
+#@st.experimental_memo
 def download_data():
     matches = load_the_spreadsheet("matches")
     lista_mazzi = load_the_spreadsheet("mazzi")
@@ -96,8 +96,6 @@ matches, lista_mazzi, tournaments = download_data()
 st.session_state['matches'] = matches
 st.session_state['lista_mazzi'] = lista_mazzi
 st.session_state['tournaments'] = tournaments
-
-
 
 
 
@@ -129,7 +127,9 @@ with st.form(key = 'insert_match'):
         deck_2 = st.selectbox("Mazzo 2: ", lista_mazzi["deck_name"])
     c1, c2 = st.columns([1, 1])
     with c1:
-        outcome = st.radio("Vincitore: ", options = ["1", "2"])
+        outcome1  = st.radio("Vincitore primo duello: ",  options = ["1", "2"], horizontal=True, key="outcome1_radio")
+        outcome2 = st.radio("Vincitore secondo duello:", options = ["0", "1", "2"], horizontal=True, key="outcome2_radio")
+        outcome3 = st.radio("Vincitore terzo duello:",   options = ["0", "1", "2"], horizontal=True, key="outcome3_radio")
     with c2:
         tournament = st.selectbox("Torneo: ", options = tournaments["tournament_name"])
     button_insert_match = st.form_submit_button("Inserisci il duello a sistema")
@@ -160,10 +160,23 @@ if not button_insert_match:
     st.image(list(immagini_yugioh.values())[immagine_pescata])
 
 if button_insert_match:
+    
     matches, lista_mazzi, tournaments = download_data()
-    outcome = insert_match2(matches, deck_1, deck_2, outcome, tournament, lista_mazzi)
+    outcome = insert_match2(matches, deck_1, deck_2, outcome1, tournament, lista_mazzi, bot_id=bot_id, chat_id=chat_id)
     if outcome == True:
         st.success("Duello inserito correttamente a sistema")
+
+    if outcome2 != "0":
+        matches, lista_mazzi, tournaments = download_data()
+        outcome = insert_match2(matches, deck_1, deck_2, outcome2, tournament, lista_mazzi, bot_id=bot_id, chat_id=chat_id)
+        if outcome == True:
+            st.success("Secondo duello inserito correttamente a sistema")
+    
+    if outcome3 != "0":
+        matches, lista_mazzi, tournaments = download_data()
+        outcome = insert_match2(matches, deck_1, deck_2, outcome3, tournament, lista_mazzi, bot_id=bot_id, chat_id=chat_id)
+        if outcome == True:
+            st.success("Terzo duello inserito correttamente a sistema")
 
 
 
@@ -171,4 +184,6 @@ if button_insert_match:
 
 # Sheets
 st.write( "[🔗 Link to Google Sheets](" + spread.url + ")" )
+
+
 
